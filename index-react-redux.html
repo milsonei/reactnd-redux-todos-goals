@@ -1,0 +1,265 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.7.2/redux.min.js"></script>
+    <script src="https://unpkg.com/react@16.3.0-alpha.1/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16.3.0-alpha.1/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <title>Udacity Todos Goals</title>
+
+</head>
+
+<body>
+    
+    <div id="app"></div>
+
+    <script type="text/javascript">
+        function generateId(){
+            return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
+        }
+        /**
+         * Library code
+         * @param {object} reducer 
+         */
+      
+        /**
+         * Ações
+         */
+        const ADD_TODO = 'ADD_TODO';
+        const REMOVE_TODO = 'REMOVE_TODO';
+        const TOGGLE_TODO = 'TOGGLE_TODO';
+        const ADD_GOAL = 'ADD_GOAL';
+        const REMOVE_GOAL = 'REMOVE_GOAL';
+        const TOGGLE_GOAL = 'TOGGLE_GOAL';
+
+        function addTodoAction(todo) {
+            return {
+                type: ADD_TODO,
+                todo
+            }
+        }
+
+        function removeTodoAction(id) {
+            return {
+                type: REMOVE_TODO,
+                id
+            }
+        }
+
+        function toggleTodoAction(id) {
+            return {
+                type: TOGGLE_TODO,
+                id
+            }
+        }
+
+
+        function addGoalAction(goal) {
+            return {
+                type: ADD_GOAL,
+                goal
+            }
+        }
+
+        function removeGoalAction(id) {
+            return {
+                type: REMOVE_GOAL,
+                id
+            }
+        }
+
+        function toggleGoalAction(id) {
+            return {
+                type: TOGGLE_GOAL,
+                id
+            }
+        }
+
+        /**
+         * App code que contém o código do reducer
+         * Este é o código que o usuário deverá escrever para decidir como o estado muda com base na ação
+         */
+        function todos(todos = [], action) {
+            switch (action.type) {
+                case ADD_TODO:
+                    return todos.concat([action.todo]);
+                case REMOVE_TODO:
+                    return todos.filter(todo => todo.id !== action.id);
+                case TOGGLE_TODO:
+                    return todos.map(todo => todo.id !== action.id ? todo : Object.assign({}, todo, {
+                        complete: !todo.complete
+                    }));
+                default:
+                    return todos;
+            }
+        }
+
+        function goals(goals = [], action) {
+            switch (action.type) {
+                case ADD_GOAL:
+                    return goals.concat([action.goal]);
+                case REMOVE_GOAL:
+                    return goals.filter(goal => goal.id !== action.id);
+                case TOGGLE_GOAL:
+                    return goals.map(goal => goal.id !== action.id ? goal : Object.assign({}, goal, {
+                        complete: !goal.complete
+                    }));
+                default:
+                    return goals;
+            }
+        }
+        
+        const checker = (store) => (next) => (action) =>{
+            if (action.type === ADD_TODO &&
+                action.todo.name.toLowerCase().includes('bitcoin')){
+                    return alert("Nope. That's a bad idea.");
+            }
+
+            if (action.type === ADD_GOAL &&
+                action.goal.name.toLowerCase().includes('bitcoin')){
+                    return alert("Nope. That's a bad idea.");
+            }
+
+            return next(action);
+        }      
+
+        const logger = (store) => (next) => (action) =>{
+            console.group(action.type)
+                console.log('The action: ', action)
+                const result = next(action)
+                console.log('The new state: ', store.getState())
+            console.groupEnd()
+            return result;
+        }
+
+        const store = Redux.createStore(Redux.combineReducers({
+            todos,
+            goals
+        }), Redux.applyMiddleware(checker, logger));
+
+                 
+    </script>
+
+    <script type="text/babel">        
+        function List(props){
+            return (
+                <ul>
+                    {
+                        props.items.map((item) => (
+                        <li key={item.id}>
+                            <span
+                            onClick={() => props.toggle && props.toggle(item.id)}
+                            style={
+                                    {
+                                        textDecoration: item.complete ? "line-through" : "none",
+                                        cursor: "pointer"
+                                    }                                    
+                                }>
+                                {item.name}
+                            </span>
+                            <button style={{marginLeft:"5px"}} onClick={() => props.remove(item)}>X</button>
+                        </li>
+                    ))
+                    }
+                </ul>
+            )
+        }
+
+        class Todos extends React.Component {
+            addItem = (e) => {
+                e.preventDefault();
+                const name = this.input.value;
+                this.input.value = '';
+                this.props.store.dispatch(addTodoAction({
+                    id: generateId(),
+                    name,
+                    complete: false               
+            }))
+            }
+            removeItem = (todo) => {
+                this.props.store.dispatch(removeTodoAction(todo.id))
+            }
+            toggleItem = (id) => {
+                this.props.store.dispatch(toggleTodoAction(id))
+            }
+            render(){
+                return (
+                    <div>
+                        <h1>Todo List</h1>
+                        <input
+                         type="text"
+                         placeholder="Todo"
+                         ref={(input) => this.input = input}                         
+                        />
+                        <button onClick={this.addItem}>Add Todo</button>
+                    
+                        <List 
+                            items={this.props.todos}
+                            remove={this.removeItem}
+                            toggle={this.toggleItem}
+                        />
+                    </div>
+                )
+            }
+        }
+
+        class Goals extends React.Component {
+            addItem =(e) => {
+                e.preventDefault();
+                const name = this.input.value;
+                this.input.value = '';
+                this.props.store.dispatch(addGoalAction({
+                    id: generateId(),
+                    name                     
+                }))
+            }
+            removeItem = (goal) => {
+                this.props.store.dispatch(removeGoalAction(goal.id))
+            }
+            toggleItem = (id) => {
+                this.props.store.dispatch(toggleGoalAction(id))
+            }
+            render(){
+                return (
+                    <div>
+                        <h1>Goals</h1>
+                        <input
+                        type="text"
+                        placeholder="Goal"
+                        ref={(input) => this.input = input}
+                        />
+                        <button onClick={this.addItem}>Add Goal</button>
+                        <List
+                         items={this.props.goals}
+                         remove={this.removeItem}
+                         toggle={this.toggleItem}
+                         />
+                    </div>
+                )
+            }
+        }
+
+        class App extends React.Component {
+            componentDidMount(){
+                const { store } = this.props;
+                store.subscribe(() => this.forceUpdate());
+            }
+            render(){
+                const { store } = this.props;
+                const { todos, goals } = store.getState();
+                return (
+                    <div>
+                        <Todos todos={todos} store={store}/>
+                        <Goals goals={goals} store={store}/>
+                    </div>
+                )
+            }
+        }
+        ReactDOM.render(<App store={store} />, document.getElementById("app"));
+    </script>
+</body>
+
+</html>
